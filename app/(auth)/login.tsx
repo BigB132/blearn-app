@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { styles } from "../../styles/global";
 import SHA256 from "crypto-js/sha256";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const router = useRouter();
