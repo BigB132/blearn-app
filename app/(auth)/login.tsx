@@ -1,9 +1,38 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { styles } from "../../styles/global";
+import SHA256 from "crypto-js/sha256";
+import * as SecureStore from "expo-secure-store";
 
-export default function Register() {
+export default function Login() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = async () => {
+    try {
+      const passwordHash = SHA256(password).toString();
+      const response = await fetch("https://blearn-v3-backend.onrender.com/userapi/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, passwordHash }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        await SecureStore.setItemAsync("accessToken", data.accessToken);
+        await SecureStore.setItemAsync("refreshToken", data.refreshToken);
+        router.replace("/");
+      } else {
+        Alert.alert("Error", data.message || "Login failed");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Server not reachable");
+      console.error(error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -14,19 +43,20 @@ export default function Register() {
         style={styles.input}
         keyboardType="email-address"
         autoCapitalize="none"
+        value={email}
+        onChangeText={setEmail}
       />
       <TextInput
         placeholder="Password"
         style={styles.input}
         secureTextEntry
+        value={password}
+        onChangeText={setPassword}
       />
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => {
-          // For now, just navigate to the Welcome page
-          router.replace("/(auth)");
-        }}
+        onPress={handleLogin}
       >
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
