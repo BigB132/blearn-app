@@ -1,13 +1,13 @@
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect } from "react";
 import { styles } from "../../styles/global";
-import * as SecureStore from "expo-secure-store";
 import SHA256 from "crypto-js/sha256";
+import { useAuth } from "../../context/AuthContext";
 
 export default function VerifyEmail() {
-  const router = useRouter();
   const params = useLocalSearchParams();
+  const { signIn } = useAuth();
   const [code, setCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,11 +23,14 @@ export default function VerifyEmail() {
 
   const handleVerify = async () => {
     try {
-      const verifyResponse = await fetch("https://blearn-v3-backend.onrender.com/userapi/verifyemail", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, verificationCode: code }),
-      });
+      const verifyResponse = await fetch(
+        "https://blearn-v3-backend.onrender.com/userapi/verifyemail",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, verificationCode: code }),
+        }
+      );
 
       const verifyData = await verifyResponse.json();
 
@@ -36,22 +39,25 @@ export default function VerifyEmail() {
 
         // now log in
         const passwordHash = SHA256(password).toString();
-        const loginResponse = await fetch("https://blearn-v3-backend.onrender.com/userapi/login", {
+        const loginResponse = await fetch(
+          "https://blearn-v3-backend.onrender.com/userapi/login",
+          {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, passwordHash }),
-        });
+          }
+        );
 
         const loginData = await loginResponse.json();
 
-        if(loginResponse.ok) {
-            await SecureStore.setItemAsync("accessToken", loginData.accessToken);
-            await SecureStore.setItemAsync("refreshToken", loginData.refreshToken);
-            router.replace("/");
+        if (loginResponse.ok) {
+          signIn(loginData.accessToken, loginData.refreshToken);
         } else {
-            Alert.alert("Error", loginData.message || "Login failed after verification");
+          Alert.alert(
+            "Error",
+            loginData.message || "Login failed after verification"
+          );
         }
-
       } else {
         Alert.alert("Error", verifyData.message || "Email verification failed");
       }
