@@ -2,6 +2,7 @@ import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { styles } from "../../styles/global";
+import SHA256 from "crypto-js/sha256";
 
 export default function Register() {
   const router = useRouter();
@@ -11,22 +12,26 @@ export default function Register() {
 
   const handleRegister = async () => {
     try {
-      const response = await fetch("https://blearn-v3-backend.onrender.com/userapi/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const passwordHash = SHA256(password).toString();
+      const response = await fetch(
+        "https://blearn-v3-backend.onrender.com/userapi/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, passwordHash, username }),
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert("Erfolg", "Konto erstellt!");
-        router.replace("/(auth)"); // oder gleich einloggen
+        Alert.alert("Success", "Account created!");
+        router.push({ pathname: "/(auth)/verifyemail", params: { email, password } });
       } else {
-        Alert.alert("Fehler", data.message || "Registrierung fehlgeschlagen");
+        Alert.alert("Error", data.message || "Registration failed");
       }
     } catch (error) {
-      Alert.alert("Fehler", "Server nicht erreichbar");
+      Alert.alert("Error", "Server not reachable");
       console.error(error);
     }
   };
@@ -58,14 +63,12 @@ export default function Register() {
         value={password}
         onChangeText={setPassword}
       />
-    
+
       <TouchableOpacity
         style={[styles.button, styles.secondaryButton]}
-        onPress={() => {
-          handleRegister
-        }}
+        onPress={handleRegister}
       >
-        <Text style={ styles.buttonText }>Register</Text>
+        <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
