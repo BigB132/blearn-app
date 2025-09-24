@@ -3,28 +3,31 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { styles } from "../../styles/global";
 import SHA256 from "crypto-js/sha256";
-import * as SecureStore from "expo-secure-store";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Login() {
   const router = useRouter();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
     try {
       const passwordHash = SHA256(password).toString();
-      const response = await fetch("https://blearn-v3-backend.onrender.com/userapi/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, passwordHash }),
-      });
+      const response = await fetch(
+        "https://blearn-v3-backend.onrender.com/userapi/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, passwordHash }),
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        await SecureStore.setItemAsync("accessToken", data.accessToken);
-        await SecureStore.setItemAsync("refreshToken", data.refreshToken);
-        router.replace("/");
+        signIn(data.accessToken, data.refreshToken);
+        // The redirection is now handled by the AuthProvider
       } else {
         Alert.alert("Error", data.message || "Login failed");
       }
