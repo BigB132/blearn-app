@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { styles } from "../../styles/global";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Home() {
   const { signOut } = useAuth();

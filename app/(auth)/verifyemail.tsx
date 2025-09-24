@@ -3,7 +3,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect } from "react";
 import { styles } from "../../styles/global";
 import SHA256 from "crypto-js/sha256";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function VerifyEmail() {
   const params = useLocalSearchParams();
